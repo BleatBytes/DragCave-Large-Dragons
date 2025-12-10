@@ -7,6 +7,8 @@
 // @match        *://dragcave.net/view/*
 // @icon         https://icons.duckduckgo.com/ip2/dragcave.net.ico
 // @grant        GM_addStyle
+// @updateURL    https://raw.githubusercontent.com/BleatBytes/DragCave-Large-Dragons/refs/heads/main/Dragon%20Cave%20-%20Large%20Dragons-v0.9.user.js
+// @downloadURL    https://raw.githubusercontent.com/BleatBytes/DragCave-Large-Dragons/refs/heads/main/Dragon%20Cave%20-%20Large%20Dragons-v0.9.user.js
 // ==/UserScript==
 
 function DOMReady(func) {
