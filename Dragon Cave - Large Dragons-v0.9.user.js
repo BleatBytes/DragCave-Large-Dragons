@@ -3,7 +3,7 @@
 // @namespace    https://github.com/BleatBytes/DragCave-Large-Dragons
 // @version      v0.9
 // @description  Makes dragons in Dragon Cave appear larger on their View page.
-// @author       You
+// @author       Valen
 // @match        *://dragcave.net/view/*
 // @icon         https://icons.duckduckgo.com/ip2/dragcave.net.ico
 // @grant        GM_addStyle
