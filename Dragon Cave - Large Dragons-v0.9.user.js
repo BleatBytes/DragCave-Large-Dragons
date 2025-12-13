@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Dragon Cave - Large Dragons
 // @namespace    https://github.com/BleatBytes/DragCave-Large-Dragons
-// @version      v1.1
+// @version      v1.2
 // @description  Makes dragons in Dragon Cave appear larger on their View page, on a User's page, and on a user's Dragons page.
 // @author       Valen
 // @match        *://dragcave.net/view/*
@@ -23,7 +23,7 @@ function viewBig($N = 2){ // $N <- This is by how much you want to enlargen the 
     };
 
     let growthCheck = document.querySelector("._6i_0 section > p").textContent.match(/(will die)/);
-    var tinyBabies = true; // <- Makes eggs and hatchlings appear small on View pages. Turn to "false" if you want them to look big too! Note that frozen hatchlings will get big anyways.
+    let tinyBabies = true; // <- Makes eggs and hatchlings appear small on View pages. Turn to "false" if you want them to look big too! Note that frozen hatchlings will get big anyways.
 
     if ((growthCheck && (tinyBabies == false)) || !growthCheck){
         GM_addStyle(`
@@ -48,33 +48,31 @@ function listBig($N = 2){
 
     let w;
     let h;
-    var tinyBabies = true; // <- Makes eggs and hatchlings appear small on Dragons and User pages. Turn to "false" if you want them to look big too! Note that frozen hatchlings will get big anyways.
+    let tinyBabies = true; // <- Makes eggs and hatchlings appear small on Dragons and User pages. Turn to "false" if you want them to look big too! Note that frozen hatchlings will get big anyways.
 
     for(var i=0; i < imgs.length; i++){
         let ele = imgs[i];
-
-        w = ele.getAttribute('width');
-        h = ele.getAttribute('height');
-
-        if (!w || !h){
+        if (ele.hasAttribute('width') || ele.hasAttribute('height')){
+            w = ele.getAttribute('width');
+            h = ele.getAttribute('height');
+            ele.setAttribute('width', w * $N);
+            ele.setAttribute('height', h * $N);
+        } else {
             let newImg = new Image();
             newImg.onload = function(){
                 const imageWidth = this.width;
                 const imageHeight = this.height;
-                newImg.src = ele.src;
-                w = newImg.width;
-                h = newImg.height;
+
+                console.log(imageWidth,"x",imageHeight);
                 if (tinyBabies == true) {
-                    ele.setAttribute('width', w);
-                    ele.setAttribute('height', h);
+                    ele.setAttribute('width', imageWidth);
+                    ele.setAttribute('height', imageHeight);
                 } else {
-                    ele.setAttribute('width', w * $N);
-                    ele.setAttribute('height', h * $N);
+                    ele.setAttribute('width', imageWidth * $N);
+                    ele.setAttribute('height', imageHeight * $N);
                 };
             };
-        } else {
-            ele.setAttribute('width', w * $N);
-            ele.setAttribute('height', h * $N);
+            newImg.src = ele.src;
         };
     };
 
@@ -105,3 +103,4 @@ const exec = function() {
         };
     };
 }();
+
