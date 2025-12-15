@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Dragon Cave - Large Dragons
 // @namespace    https://github.com/BleatBytes/DragCave-Large-Dragons
-// @version      v1.2
+// @version      v1.4
 // @description  Makes dragons in Dragon Cave appear larger on their View page, on a User's page, and on a user's Dragons page.
 // @author       Valen
 // @match        *://dragcave.net/view/*
@@ -18,12 +18,30 @@
 function viewBig($N = 2){ // $N <- This is by how much you want to enlargen the images. E.g. $N = 2 makes images twice as big.
     const calcAt = function($N, param){
         let ele = document.querySelector('img[class="spr _6i_2"]');
-        let ret = ele.getAttribute(param);
+        let check = ele.hasAttribute(param);
+        let ret;
+        if (!check){
+            console.log("Running new Image()...")
+            let newImg = new Image();
+            newImg.onload = function(){
+                if (param.test(/(width)/)) {
+                    ret = this.width;
+                    console.log("Tested parameter is 'width' at: ", ret);
+                } else if (param.test(/(height)/)) {
+                    ret = this.height;
+                    console.log("Tested parameter is 'height' at: ", ret);
+                };
+            };
+            newImg.src = ele.src;
+        } else {
+            ret = ele.getAttribute(param);
+            console.log(ret);
+        }
         return ret * $N;
     };
 
     let growthCheck = document.querySelector("._6i_0 section > p").textContent.match(/(will die)/);
-    let tinyBabies = true; // <- Makes eggs and hatchlings appear small on View pages. Turn to "false" if you want them to look big too! Note that frozen hatchlings will get big anyways.
+    let tinyBabies = false; // <- Makes eggs and hatchlings appear small on View pages. Turn to "false" if you want them to look big too! Note that frozen hatchlings will get big anyways.
 
     if ((growthCheck && (tinyBabies == false)) || !growthCheck){
         GM_addStyle(`
