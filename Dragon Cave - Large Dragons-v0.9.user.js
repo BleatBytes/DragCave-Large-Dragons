@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Dragon Cave - Large Dragons
 // @namespace    https://github.com/BleatBytes/DragCave-Large-Dragons
-// @version      v2.0
+// @version      v2.0.2
 // @description  Makes dragons in Dragon Cave appear larger on their View page, on a User's page, and on a user's Dragons page.
 // @author       Valen
 // @match        *://dragcave.net/account
@@ -376,24 +376,21 @@ async function setHTMLSelect() {
 };
 
 function genEnlarge(el, n) {
-    let w;
     let h;
     if (el.hasAttribute('width') && el.hasAttribute('height')){
-        w = el.getAttribute('width') * n;
-        h = el.getAttribute('height') * n;
-        el.setAttribute('width', w);
-        el.setAttribute('height', h);
+        h = el.getAttribute('height');
+        el.setAttribute('width', el.getAttribute('width') * n);
+        el.setAttribute('height', el.getAttribute('height') * n);
     } else {
         let newImg = new Image();
         newImg.onload = function(){
-            w = this.width * n;
-            h = this.height * n;
-            el.setAttribute('width', w);
-            el.setAttribute('height', h);
+            h = this.height;
+            el.setAttribute('width', this.width * n);
+            el.setAttribute('height',this.height * n);
         };
         newImg.src = el.src;
     };
-    if (/(max\-height)/.test(el.getAttribute("style"))) { el.setAttribute("style", `max-height: ${h}px!important; width: auto;`) }
+    if (/(max\-height)/.test(el.getAttribute("style"))) { el.setAttribute("style", `max-height: ${h * n}px!important; width: auto;`) }
 };
 
 const exec = function() {
@@ -410,22 +407,10 @@ const exec = function() {
             use: function(){ turnBig("._6c_6 img", "notifSize1", "notifSize2", "._6c_3 a") }
         }, {
             name: "dragons",
-            boss: GM_getValue("notifCheck", false),
-            regex: /\/(dragons)(\S+){0,}/,
-            mobile: false,
-            use: function(){ turnBig("#dragonlist img[class='_11_2']", "listSize1", "listSize2") }
-        }, {
-            name: "user",
-            boss: GM_getValue("notifCheck", false),
-            regex: /\/(user)(\S+){0,}/,
+            boss: GM_getValue("listCheck", false),
+            regex: /\/((dragons)(\S+){0,})|((user)(\S+){0,})|((group)\/\d+)/,
             mobile: false,
             use: function(){ turnBig("._1l_0 img[class='_11_2']", "listSize1", "listSize2") }
-        }, {
-            name: "group",
-            boss: GM_getValue("notifCheck", false),
-            regex: /\/(group)\/\d+/,
-            mobile: false,
-            use: function(){ turnBig("#udragonlist img[class='_11_2']", "listSize1", "listSize2") }
         }, {
             name: "account",
             regex: /\/(account)$/,
@@ -457,11 +442,12 @@ async function turnBig(imgselector, adult, baby, secsel = "") {
             let dragon = dragons[i];
             let age = ages[i];
             let growthCheck = regex.test(age.textContent);
+            console.log(dragon, '\n', age.textContent, '\n', "growthCheck: "+growthCheck, '\n', /(their trade)/.test(age.textContent))
 
-            if ((((age.nextSibling.nodeType == Node.TEXT_NODE) && /(has grown up(\.|\.\s))$/.test(age.nextSibling.textContent)) || !growthCheck) && (1 <= adultN)){ // <- Si es un adulto con valor mayor o igual a 1
-                genEnlarge(dragon, adultN);
-            } else if (growthCheck && (1 <= babyN)) { // <- Si es un bebé con valor mayor o igual a 1
+            if ((/(their trade)/.test(age.textContent) || growthCheck) && (1 <= babyN)){ // <- Si es un adulto con valor mayor o igual a 1
                 genEnlarge(dragon, babyN);
+            } else if ((((age.nextSibling && age.nextSibling.nodeType == Node.TEXT_NODE) && /(has grown up(\.|\.\s))$/.test(age.nextSibling.textContent)) || !growthCheck) && (1 <= adultN)) { // <- Si es un bebé con valor mayor o igual a 1
+                genEnlarge(dragon, adultN);
             };
         };
     } else { // <- Asumiendo que se trata de una página con elementos de tabla (/dragons/, /group/, etc etc)
