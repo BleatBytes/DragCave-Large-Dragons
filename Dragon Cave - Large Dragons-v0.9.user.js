@@ -1,15 +1,16 @@
 // ==UserScript==
 // @name         Dragon Cave - Large Dragons
 // @namespace    https://github.com/BleatBytes/DragCave-Large-Dragons
-// @version      v2.0.5
+// @version      v2.0.7
 // @description  Makes dragons in Dragon Cave appear larger on their View page, on a User's page, and on a user's Dragons page.
 // @author       Valen
-// @match        *://dragcave.net/account
-// @match        *://dragcave.net/notifications
+// @match        *://dragcave.net/account*
+// @match        *://dragcave.net/notifications*
 // @match        *://dragcave.net/view*
 // @match        *://dragcave.net/user*
 // @match        *://dragcave.net/dragons*
 // @match        *://dragcave.net/group*
+// @exclude      *://dragcave.net/group/new*
 // @icon         https://icons.duckduckgo.com/ip2/dragcave.net.ico
 // @grant        GM_addStyle
 // @grant        GM_getValue
@@ -406,6 +407,22 @@ async function setHTMLSelect() {
     $li.prepend($header);
 };
 
+function redirectToSettings() {
+    const $a = document.createElement("a");
+    $a.href = "/account/";
+    const $i = document.createElement("i");
+    $i.classList.add("_8u_1", "_8u_m");
+    $i.setAttribute("aria-hidden", "true");
+    const $span = document.createElement("span");
+    $span.textContent = '"Large Dragons" Settings';
+    $a.append($i);
+    $a.append($span);
+    const parent = document.querySelector("._2o_0");
+    const $li = document.createElement("li");
+    $li.append($a);
+    parent.append($li);
+};
+
 function genEnlarge(el, n) {
     let h;
     if (el.hasAttribute('width') && el.hasAttribute('height')){
@@ -430,21 +447,21 @@ const exec = function() {
             name: "view",
             boss: true,
             regex: /\/(view)\S+/,
-            use: function(){ if (GM_getValue("viewCheck", false) == true) {turnBig("img[class='spr _6i_2']", "viewSize1", "viewSize2", "._6i_0 section > p")} }
+            use: function(){ if (GM_getValue("viewCheck", false) == true) { turnBig("img[class='spr _6i_2']", "viewSize1", "viewSize2", "._6i_0 section > p") }; redirectToSettings() }
         }, {
             name: "notif",
             boss: true,
             regex: /\/(notifications)/,
-            use: function(){ if(GM_getValue("notifCheck", false) == true) { turnBig("._6c_6 img", "notifSize1", "notifSize2", "._6c_3 a")} }
+            use: function(){ if(GM_getValue("notifCheck", false) == true) { turnBig("._6c_6 img", "notifSize1", "notifSize2", "._6c_0") }; }
         }, {
             name: "dragons",
             boss: true,
             regex: /\/((dragons)(\S+){0,})|((user)(\S+){0,})|((group)\/\d+)/,
             mobile: false,
-            use: function(){ if (GM_getValue("listCheck", false) == true) {turnBig("._1l_0 img[class='_11_2']", "listSize1", "listSize2")} }
+            use: function(){ if (GM_getValue("listCheck", false) == true) { turnBig("._1l_0 img[class='_11_2']", "listSize1", "listSize2") }; redirectToSettings() }
         }, {
             name: "account",
-            regex: /\/(account)$/,
+            regex: /\/(account)(|\/)$/,
             use: function(){ setHTMLSelect() }
         }
     ];
@@ -462,38 +479,49 @@ const exec = function() {
 }();
 
 async function turnBig(imgselector, adult, baby, secsel = "") {
-    let regex = /((Hatchling)|(Egg)|(Your egg)|(their trade))/
-    let dragons = await Array.from(document.querySelectorAll(imgselector));
-    let adultN = GM_getValue(adult);
-    let babyN = GM_getValue(baby);
+    const regex = /((Hatchling)|(Egg)|(Your egg)|(((their)|(your)) trade))/
+    const dragons = await Array.from(document.querySelectorAll(imgselector));
+    const ages = Array.from(document.querySelectorAll(secsel));
+    const adultN = GM_getValue(adult);
+    const babyN = GM_getValue(baby);
+    let lastAge;
 
-    if (dragons[0].closest("table") == null) { // <- Sólo va a ser null si se está en /view/ o /notifications/
-        let ages = Array.from(document.querySelectorAll(secsel));
-        for (let i = 0; i < dragons.length; i++) {
-            let dragon = dragons[i];
-            let age = ages[i];
-            let growthCheck = regex.test(age.textContent);
+    GM_addStyle(`${imgselector} { image-rendering: crisp-edges; }`);
 
-            if (growthCheck && (1 <= babyN)){ // <- Si es un adulto con valor mayor o igual a 1
-                genEnlarge(dragon, babyN);
-            } else if (!growthCheck && (1 <= adultN)) { // <- Si es un bebé con valor mayor o igual a 1
-                genEnlarge(dragon, adultN);
-            };
+    if ((dragons.length > 1) && (dragons[0].closest("table") == null)) { // <- Sólo va a ser null si se está en /notifications/
+        const parents = Array.from(document.querySelectorAll(secsel));
+        for (let i = 0; i < parents.length; i++) {
+            const parent = parents[i];
+            const age = parent.querySelector("._6c_3 a");
+            const growthCheck = regex.test(age.textContent);
+            const imgs = parent.querySelectorAll(imgselector);
+            imgs.forEach(img => {
+                execSize(growthCheck, babyN, adultN, img)
+            })
         };
+    } else if (dragons[0].closest("table") == null) { // <- Sólo va a ser null si se está en /view/
+        const dragon = dragons[0];
+        const age = document.querySelector(secsel);
+        const growthCheck = regex.test(age.textContent);
+
+        execSize(growthCheck, babyN, adultN, dragon)
     } else { // <- Asumiendo que se trata de una página con elementos de tabla (/dragons/, /group/, etc etc)
-        let table = dragons[0].closest("table");
+        const table = dragons[0].closest("table");
 
         for (var i = 1, row; row = table.rows[i]; i++) {
-            let img = row.cells[0].querySelector("img");
-            let age = row.cells[2].textContent;
-            let ageCheck = age.match(regex);
+            const img = row.cells[0].querySelector("img");
+            const age = row.cells[2].textContent;
+            const ageCheck = regex.test(age);
 
-            if ( !ageCheck && (1 <= adultN)){ // <- Si es un adulto con valor mayor o igual a 1
-                genEnlarge(img, adultN);
-            } else if (ageCheck && (1 <= babyN)) { // <- Si es un bebé con valor mayor o igual a 1
-                genEnlarge(img, babyN);
-            };
+            execSize(ageCheck, babyN, adultN, img)
         };
     };
-    GM_addStyle(`${imgselector} { image-rendering: crisp-edges; }`);
+
+    function execSize (age_check, baby_number, adult_number, dragon_) {
+        if (age_check && (1 <= baby_number)) {
+            genEnlarge(dragon_, baby_number)
+        } else if (!age_check && (1 <= adult_number)) {
+            genEnlarge(dragon_, adult_number)
+        };
+    };
 };
