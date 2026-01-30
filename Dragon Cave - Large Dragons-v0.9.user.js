@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Dragon Cave - Large Dragons
 // @namespace    https://github.com/BleatBytes/DragCave-Large-Dragons
-// @version      v2.0.7
+// @version      v2.0.8
 // @description  Makes dragons in Dragon Cave appear larger on their View page, on a User's page, and on a user's Dragons page.
 // @author       Valen
 // @match        *://dragcave.net/account*
@@ -481,7 +481,6 @@ const exec = function() {
 async function turnBig(imgselector, adult, baby, secsel = "") {
     const regex = /((Hatchling)|(Egg)|(Your egg)|(((their)|(your)) trade))/
     const dragons = await Array.from(document.querySelectorAll(imgselector));
-    const ages = Array.from(document.querySelectorAll(secsel));
     const adultN = GM_getValue(adult);
     const babyN = GM_getValue(baby);
     let lastAge;
